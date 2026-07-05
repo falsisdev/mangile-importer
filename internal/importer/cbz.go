@@ -1,7 +1,6 @@
 package importer
 
 import (
-	"archive/zip"
 	"encoding/xml"
 	"path/filepath"
 	"sort"
@@ -17,17 +16,11 @@ type comicInfo struct {
 	Summary string `xml:"Summary"`
 }
 
-func ReadCBZ(path string) (*models.Chapter, error) {
-
-	reader, err := zip.OpenReader(path)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
+func (a *Archive) Read() (*models.Chapter, error) {
 
 	chapter := &models.Chapter{}
 
-	for _, file := range reader.File {
+	for _, file := range a.reader.File {
 
 		name := strings.ToLower(file.Name)
 
@@ -66,6 +59,7 @@ func ReadCBZ(path string) (*models.Chapter, error) {
 				Name:  filepath.Base(file.Name),
 				Path:  file.Name,
 			})
+
 		}
 	}
 

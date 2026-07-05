@@ -61,7 +61,19 @@ func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Yüklendi: %s", header.Filename)
 
-	chapter, err := importer.ReadCBZ(temp.Name())
+	archive, err := importer.Open(temp.Name())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer archive.Close()
+
+	chapter, err := archive.Read()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
