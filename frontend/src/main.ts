@@ -13,7 +13,31 @@ interface Manga {
     myAnimeListId: number;
 }
 
-const selectedFiles: File[] = [];
+interface Page {
+    index: number;
+    name: string;
+    path: string;
+}
+
+interface Chapter {
+    title: string;
+    series: string;
+    number: string;
+    summary: string;
+    pages: Page[] | null;
+}
+
+type UploadStatus = "idle" | "loading" | "success" | "error";
+
+interface SelectedFile {
+    key: string;
+    file: File;
+    status: UploadStatus;
+    chapter?: Chapter;
+    error?: string;
+}
+
+const selectedFiles: SelectedFile[] = [];
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 <div class="app">
@@ -22,11 +46,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
         <div>
             <h1>Mangile Importer</h1>
-            <p>Komikku -> Sanity Manga İçe Aktarma Aracı</p>
+            <p>Komikku -> Sanity Manga Ice Aktarma Araci</p>
         </div>
 
         <div id="status" class="status loading">
-            Bağlantı kontrol ediliyor...
+            Baglanti kontrol ediliyor...
         </div>
 
     </header>
@@ -38,14 +62,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <h2>Manga</h2>
 
             <p class="description">
-                ComicInfo.xml otomatik algılanacaktır. İstersen aşağıdan farklı
-                bir manga seçebilirsin.
+                ComicInfo.xml otomatik algilanacaktir. Istersen asagidan farkli
+                bir manga secebilirsin.
             </p>
 
             <select id="mangaSelect">
 
                 <option value="">
-                    Otomatik Algıla (ComicInfo.xml)
+                    Otomatik Algila (ComicInfo.xml)
                 </option>
 
             </select>
@@ -56,9 +80,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
             <div class="section-heading">
                 <div>
-                    <h2>CBZ Dosyaları</h2>
+                    <h2>CBZ Dosyalari</h2>
                     <p class="description">
-                        Bir veya birden fazl .cbz dosyası seç veya sürükle-bırak
+                        Bir veya birden fazla .cbz dosyasi sec veya surukle-birak.
                     </p>
                 </div>
 
@@ -78,15 +102,21 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                 <span class="drop-zone-icon">+</span>
                 <span class="drop-zone-title">CBZ dosyalarini buraya birak</span>
                 <span class="drop-zone-description">
-                    veya dosya seçmek için tıkla
+                    veya dosya secmek icin tikla
                 </span>
             </label>
 
             <div id="emptyFiles" class="empty-files">
-                Henuz dosya seçilmedi.
+                Henuz dosya secilmedi.
             </div>
 
-            <ul id="fileList" class="file-list" aria-label="Seçilen CBZ Dosyaları"></ul>
+            <ul id="fileList" class="file-list" aria-label="Secilen CBZ dosyalari"></ul>
+
+            <div class="actions">
+                <button id="previewButton" class="primary-action" type="button" disabled>
+                    Onizle
+                </button>
+            </div>
 
         </section>
 
@@ -103,6 +133,10 @@ const cbzInput = document.querySelector<HTMLInputElement>("#cbzInput")!;
 const fileList = document.querySelector<HTMLUListElement>("#fileList")!;
 const emptyFiles = document.querySelector<HTMLDivElement>("#emptyFiles")!;
 const fileCount = document.querySelector<HTMLSpanElement>("#fileCount")!;
+const previewButton =
+    document.querySelector<HTMLButtonElement>("#previewButton")!;
+
+let isUploading = false;
 
 async function loadHealth() {
     try {
@@ -115,10 +149,10 @@ async function loadHealth() {
         const health: HealthResponse = await response.json();
 
         status.className = "status success";
-        status.textContent = `✅ ${health.projectId} / ${health.dataset}`;
+        status.textContent = `OK ${health.projectId} / ${health.dataset}`;
     } catch {
         status.className = "status error";
-        status.textContent = "Sanity'e bağlanılamadı";
+        status.textContent = "Sanity'e baglanilamadi";
     }
 }
 
@@ -144,7 +178,7 @@ async function loadMangas() {
         const option = document.createElement("option");
 
         option.disabled = true;
-        option.textContent = "Mangalar yüklenemedi";
+        option.textContent = "Mangalar yuklenemedi";
 
         mangaSelect.appendChild(option);
     }
@@ -174,15 +208,24 @@ function formatFileSize(bytes: number) {
     return `${size.toFixed(size >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
 }
 
+function getPageCount(chapter: Chapter) {
+    return chapter.pages?.length ?? 0;
+}
+
 function addFiles(files: FileList | File[]) {
-    const existingFileKeys = new Set(selectedFiles.map(getFileKey));
+    const existingFileKeys = new Set(selectedFiles.map((item) => item.key));
     const incomingFiles = Array.from(files).filter(isCbzFile);
 
     incomingFiles.forEach((file) => {
         const fileKey = getFileKey(file);
 
         if (!existingFileKeys.has(fileKey)) {
-            selectedFiles.push(file);
+            selectedFiles.push({
+                key: fileKey,
+                file,
+                status: "idle",
+            });
+
             existingFileKeys.add(fileKey);
         }
     });
@@ -200,35 +243,165 @@ function renderFiles() {
 
     emptyFiles.hidden = selectedFiles.length > 0;
     fileList.hidden = selectedFiles.length === 0;
+    previewButton.disabled = selectedFiles.length === 0 || isUploading;
+    previewButton.textContent = isUploading ? "Onizleniyor..." : "Onizle";
 
-    selectedFiles.forEach((file, index) => {
-        const item = document.createElement("li");
+    selectedFiles.forEach((item, index) => {
+        const listItem = document.createElement("li");
+        const fileRow = document.createElement("div");
         const fileInfo = document.createElement("div");
         const fileName = document.createElement("span");
-        const fileSize = document.createElement("span");
+        const fileMeta = document.createElement("span");
+        const statusBadge = document.createElement("span");
         const removeButton = document.createElement("button");
 
-        item.className = "file-item";
+        listItem.className = "file-item";
+        fileRow.className = "file-row";
         fileInfo.className = "file-info";
         fileName.className = "file-name";
-        fileSize.className = "file-size";
+        fileMeta.className = "file-size";
+        statusBadge.className = `file-status ${item.status}`;
         removeButton.className = "remove-file";
 
-        fileName.textContent = file.name;
-        fileSize.textContent = formatFileSize(file.size);
+        fileName.textContent = item.file.name;
+        fileMeta.textContent = formatFileSize(item.file.size);
+        statusBadge.textContent = getStatusLabel(item.status);
         removeButton.type = "button";
-        removeButton.textContent = "Kaldır";
-        removeButton.setAttribute("aria-label", `${file.name} dosyasını kaldır`);
+        removeButton.textContent = "Kaldir";
+        removeButton.disabled = isUploading;
+        removeButton.setAttribute(
+            "aria-label",
+            `${item.file.name} dosyasini kaldir`,
+        );
 
         removeButton.addEventListener("click", () => {
             selectedFiles.splice(index, 1);
             renderFiles();
         });
 
-        fileInfo.append(fileName, fileSize);
-        item.append(fileInfo, removeButton);
-        fileList.appendChild(item);
+        fileInfo.append(fileName, fileMeta);
+        fileRow.append(fileInfo, statusBadge, removeButton);
+        listItem.appendChild(fileRow);
+
+        if (item.status === "success" && item.chapter) {
+            listItem.appendChild(renderChapterPreview(item.chapter));
+        }
+
+        if (item.status === "error" && item.error) {
+            const errorMessage = document.createElement("p");
+
+            errorMessage.className = "file-error";
+            errorMessage.textContent = item.error;
+
+            listItem.appendChild(errorMessage);
+        }
+
+        fileList.appendChild(listItem);
     });
+}
+
+function getStatusLabel(uploadStatus: UploadStatus) {
+    switch (uploadStatus) {
+        case "loading":
+            return "Okunuyor";
+        case "success":
+            return "Hazir";
+        case "error":
+            return "Hata";
+        default:
+            return "Bekliyor";
+    }
+}
+
+function renderChapterPreview(chapter: Chapter) {
+    const preview = document.createElement("dl");
+    const title = chapter.title || "Baslik yok";
+    const series = chapter.series || "Seri yok";
+    const number = chapter.number || "Numara yok";
+    const pageCount = getPageCount(chapter);
+
+    preview.className = "chapter-preview";
+    preview.append(
+        createPreviewItem("Baslik", title),
+        createPreviewItem("Seri", series),
+        createPreviewItem("Sayi", number),
+        createPreviewItem("Sayfa", `${pageCount}`),
+    );
+
+    if (chapter.summary) {
+        preview.appendChild(createPreviewItem("Ozet", chapter.summary));
+    }
+
+    return preview;
+}
+
+function createPreviewItem(label: string, value: string) {
+    const wrapper = document.createElement("div");
+    const term = document.createElement("dt");
+    const detail = document.createElement("dd");
+
+    wrapper.className = "preview-item";
+    term.textContent = label;
+    detail.textContent = value;
+
+    wrapper.append(term, detail);
+
+    return wrapper;
+}
+
+async function uploadFile(item: SelectedFile) {
+    const formData = new FormData();
+
+    formData.append("cbz", item.file);
+
+    if (mangaSelect.value) {
+        formData.append("mangaId", mangaSelect.value);
+    }
+
+    const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const message = await response.text();
+
+        throw new Error(message || "CBZ dosyasi okunamadi.");
+    }
+
+    return response.json() as Promise<Chapter>;
+}
+
+async function previewSelectedFiles() {
+    if (selectedFiles.length === 0 || isUploading) {
+        return;
+    }
+
+    isUploading = true;
+    renderFiles();
+
+    for (const item of selectedFiles) {
+        item.status = "loading";
+        item.chapter = undefined;
+        item.error = undefined;
+        renderFiles();
+
+        try {
+            item.chapter = await uploadFile(item);
+            item.status = "success";
+        } catch (error) {
+            item.status = "error";
+            item.error =
+                error instanceof Error
+                    ? error.message.trim()
+                    : "Bilinmeyen bir hata olustu.";
+        }
+
+        renderFiles();
+    }
+
+    isUploading = false;
+    renderFiles();
 }
 
 function preventDefaultDrag(event: DragEvent) {
@@ -241,7 +414,7 @@ loadMangas();
 renderFiles();
 
 mangaSelect.addEventListener("change", () => {
-    console.log("Seçilen Manga:", mangaSelect.value);
+    console.log("Secilen Manga:", mangaSelect.value);
 });
 
 cbzInput.addEventListener("change", () => {
@@ -249,6 +422,10 @@ cbzInput.addEventListener("change", () => {
         addFiles(cbzInput.files);
         cbzInput.value = "";
     }
+});
+
+previewButton.addEventListener("click", () => {
+    void previewSelectedFiles();
 });
 
 dropZone.addEventListener("dragenter", (event) => {

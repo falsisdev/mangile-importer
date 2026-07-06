@@ -140,11 +140,15 @@ select:focus {
 }
 
 .file-item {
-    @apply flex items-center justify-between gap-4 rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3;
+    @apply rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3;
+}
+
+.file-row {
+    @apply flex items-center justify-between gap-4;
 }
 
 .file-info {
-    @apply min-w-0;
+    @apply min-w-0 flex-1;
 }
 
 .file-name {
@@ -153,6 +157,26 @@ select:focus {
 
 .file-size {
     @apply mt-1 block text-xs text-zinc-500;
+}
+
+.file-status {
+    @apply shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium;
+}
+
+.file-status.idle {
+    @apply border-zinc-700 bg-zinc-900 text-zinc-400;
+}
+
+.file-status.loading {
+    @apply border-yellow-700 bg-yellow-500/10 text-yellow-300;
+}
+
+.file-status.success {
+    @apply border-emerald-700 bg-emerald-500/10 text-emerald-300;
+}
+
+.file-status.error {
+    @apply border-red-700 bg-red-500/10 text-red-300;
 }
 
 .remove-file {
@@ -165,6 +189,50 @@ select:focus {
 
 .remove-file:focus {
     @apply outline-none ring-2 ring-red-500/30;
+}
+
+.remove-file:disabled {
+    @apply cursor-not-allowed opacity-50;
+}
+
+.actions {
+    @apply mt-6 flex justify-end;
+}
+
+.primary-action {
+    @apply rounded-lg border border-blue-500 bg-blue-500 px-5 py-3 text-sm font-semibold text-white transition cursor-pointer;
+}
+
+.primary-action:hover {
+    @apply border-blue-400 bg-blue-400;
+}
+
+.primary-action:focus {
+    @apply outline-none ring-2 ring-blue-500/30;
+}
+
+.primary-action:disabled {
+    @apply cursor-not-allowed border-zinc-700 bg-zinc-800 text-zinc-500;
+}
+
+.chapter-preview {
+    @apply mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:grid-cols-2;
+}
+
+.preview-item {
+    @apply min-w-0;
+}
+
+.preview-item dt {
+    @apply text-xs font-medium uppercase text-zinc-500;
+}
+
+.preview-item dd {
+    @apply mt-1 break-words text-sm text-zinc-200;
+}
+
+.file-error {
+    @apply mt-4 rounded-lg border border-red-800 bg-red-500/10 px-3 py-2 text-sm text-red-200;
 }
 
 @media (max-width: 768px) {
@@ -194,7 +262,19 @@ select:focus {
     }
 
     .file-item {
-        @apply items-start;
+        @apply px-3;
+    }
+
+    .file-row {
+        @apply flex-wrap items-start;
+    }
+
+    .actions {
+        @apply justify-stretch;
+    }
+
+    .primary-action {
+        @apply w-full;
     }
 
 }
