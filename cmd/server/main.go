@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/falsisdev/mangile-importer/internal/api"
+	"github.com/falsisdev/mangile-importer/internal/config"
 )
 
 func main() {
@@ -16,9 +17,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Sanity Project: %s", cfg.SanityProjectID)
+
 	mux := api.RegisterRoutes()
 
-	log.Println("Server running at http://localhost:8080")
+	log.Println("Sunucu Başlatıldı: http://localhost:8080")
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/falsisdev/mangile-importer/internal/config"
 	"github.com/falsisdev/mangile-importer/internal/importer"
 )
 
@@ -14,9 +13,7 @@ func RegisterRoutes() *http.ServeMux {
 
 	mux := http.NewServeMux()
 
-	fs := http.FileServer(http.Dir(config.WebDir))
-
-	mux.Handle("/", fs)
+	mux.Handle("/", http.FileServer(http.Dir("web")))
 
 	mux.HandleFunc("/api/upload", UploadCBZ)
 
