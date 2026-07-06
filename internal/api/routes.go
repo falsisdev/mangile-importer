@@ -16,8 +16,9 @@ func RegisterRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.Handle("/", http.FileServer(http.Dir("web")))
-	mux.HandleFunc("/api/upload", UploadCBZ)
 	mux.HandleFunc("/api/health", Health)
+	mux.HandleFunc("/api/mangas", GetMangas)
+	mux.HandleFunc("/api/upload", UploadCBZ)
 
 	return mux
 }
