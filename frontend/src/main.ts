@@ -46,11 +46,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
         <div>
             <h1>Mangile Importer</h1>
-            <p>Komikku -> Sanity Manga Ice Aktarma Araci</p>
+            <p>Komikku -> Sanity Manga İçe Aktarma Aracı</p>
         </div>
 
         <div id="status" class="status loading">
-            Baglanti kontrol ediliyor...
+            Bağlantı kontrol ediliyor...
         </div>
 
     </header>
@@ -62,14 +62,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <h2>Manga</h2>
 
             <p class="description">
-                ComicInfo.xml otomatik algilanacaktir. Istersen asagidan farkli
-                bir manga secebilirsin.
+                ComicInfo.xml otomatik algılanacaktır. İstersen aşağıdan farklı
+                bir manga seçebilirsin.
             </p>
 
             <select id="mangaSelect">
 
                 <option value="">
-                    Otomatik Algila (ComicInfo.xml)
+                    Otomatik Algıla (ComicInfo.xml)
                 </option>
 
             </select>
@@ -80,9 +80,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
             <div class="section-heading">
                 <div>
-                    <h2>CBZ Dosyalari</h2>
+                    <h2>CBZ Dosyaları</h2>
                     <p class="description">
-                        Bir veya birden fazla .cbz dosyasi sec veya surukle-birak.
+                        Bir veya birden fazla .cbz dosyası seç veya sürükle-bırak
                     </p>
                 </div>
 
@@ -100,14 +100,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                 />
 
                 <span class="drop-zone-icon">+</span>
-                <span class="drop-zone-title">CBZ dosyalarini buraya birak</span>
+                <span class="drop-zone-title">CBZ dosyalarını buraya bırak</span>
                 <span class="drop-zone-description">
                     veya dosya secmek icin tikla
                 </span>
             </label>
 
             <div id="emptyFiles" class="empty-files">
-                Henuz dosya secilmedi.
+                Henüz dosya seçilmedi.
             </div>
 
             <ul id="fileList" class="file-list" aria-label="Secilen CBZ dosyalari"></ul>
@@ -149,7 +149,7 @@ async function loadHealth() {
         const health: HealthResponse = await response.json();
 
         status.className = "status success";
-        status.textContent = `OK ${health.projectId} / ${health.dataset}`;
+        status.textContent = `✅ ${health.projectId} / ${health.dataset}`;
     } catch {
         status.className = "status error";
         status.textContent = "Sanity'e baglanilamadi";
@@ -244,7 +244,7 @@ function renderFiles() {
     emptyFiles.hidden = selectedFiles.length > 0;
     fileList.hidden = selectedFiles.length === 0;
     previewButton.disabled = selectedFiles.length === 0 || isUploading;
-    previewButton.textContent = isUploading ? "Onizleniyor..." : "Onizle";
+    previewButton.textContent = isUploading ? "Önizleniyor..." : "Önizle";
 
     selectedFiles.forEach((item, index) => {
         const listItem = document.createElement("li");
@@ -267,11 +267,11 @@ function renderFiles() {
         fileMeta.textContent = formatFileSize(item.file.size);
         statusBadge.textContent = getStatusLabel(item.status);
         removeButton.type = "button";
-        removeButton.textContent = "Kaldir";
+        removeButton.textContent = "Kaldır";
         removeButton.disabled = isUploading;
         removeButton.setAttribute(
             "aria-label",
-            `${item.file.name} dosyasini kaldir`,
+            `${item.file.name} dosyasını kaldır.`,
         );
 
         removeButton.addEventListener("click", () => {
@@ -305,7 +305,7 @@ function getStatusLabel(uploadStatus: UploadStatus) {
         case "loading":
             return "Okunuyor";
         case "success":
-            return "Hazir";
+            return "Hazır";
         case "error":
             return "Hata";
         default:
@@ -315,21 +315,21 @@ function getStatusLabel(uploadStatus: UploadStatus) {
 
 function renderChapterPreview(chapter: Chapter) {
     const preview = document.createElement("dl");
-    const title = chapter.title || "Baslik yok";
+    const title = chapter.title || "Başlık yok";
     const series = chapter.series || "Seri yok";
     const number = chapter.number || "Numara yok";
     const pageCount = getPageCount(chapter);
 
     preview.className = "chapter-preview";
     preview.append(
-        createPreviewItem("Baslik", title),
+        createPreviewItem("Başlık", title),
         createPreviewItem("Seri", series),
-        createPreviewItem("Sayi", number),
+        createPreviewItem("Sayı", number),
         createPreviewItem("Sayfa", `${pageCount}`),
     );
 
     if (chapter.summary) {
-        preview.appendChild(createPreviewItem("Ozet", chapter.summary));
+        preview.appendChild(createPreviewItem("Özet", chapter.summary));
     }
 
     return preview;

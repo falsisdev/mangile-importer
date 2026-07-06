@@ -2,3 +2,4 @@
 .pnpm-store/
 .gocache/
 .gomodcache/
+.agents/
