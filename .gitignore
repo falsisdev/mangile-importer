@@ -1,1 +1,4 @@
 .env
+.pnpm-store/
+.gocache/
+.gomodcache/
