@@ -21,7 +21,7 @@ func New(cfg *config.Config) *Client {
 
 func (c *Client) URL(path string) string {
 	return fmt.Sprintf(
-		"https://%s.api.sanity.io/%s/%s",
+		"https://%s.api.sanity.io/v%s/%s",
 		c.config.SanityProjectID,
 		c.config.SanityAPIVersion,
 		path,

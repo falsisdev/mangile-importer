@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/falsisdev/mangile-importer/internal/config"
 	"github.com/falsisdev/mangile-importer/internal/importer"
+	"github.com/falsisdev/mangile-importer/internal/sanity"
 )
 
 func RegisterRoutes() *http.ServeMux {
@@ -14,7 +16,6 @@ func RegisterRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.Handle("/", http.FileServer(http.Dir("web")))
-
 	mux.HandleFunc("/api/upload", UploadCBZ)
 
 	return mux
@@ -23,7 +24,7 @@ func RegisterRoutes() *http.ServeMux {
 func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
-		http.Error(w, "Methoda izin verilmemektedir.", http.StatusMethodNotAllowed)
+		http.Error(w, "Sadece POST isteğine izin verilmektedir.", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -38,7 +39,6 @@ func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	defer file.Close()
 
 	temp, err := os.CreateTemp("", "mangile-*.cbz")
@@ -46,7 +46,6 @@ func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	defer os.Remove(temp.Name())
 	defer temp.Close()
 
@@ -56,14 +55,13 @@ func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Yüklendi: %s", header.Filename)
+	log.Printf("CBZ yüklendi: %s", header.Filename)
 
 	archive, err := importer.Open(temp.Name())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	defer archive.Close()
 
 	chapter, err := archive.Read()
@@ -71,12 +69,27 @@ func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	cfg, err := config.Load()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	client := sanity.New(cfg)
+
+	manga, err := client.FindManga(chapter.Series)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	log.Printf("Manga bulundu: %s (%s)", manga.Title, manga.ID)
+
 	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(chapter)
+	err = json.NewEncoder(w).Encode(chapter)
+	if err != nil {
+		log.Println("JSON cevabı gönderilemedi:", err)
+	}
 }
