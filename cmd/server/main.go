@@ -8,6 +8,7 @@ import (
 
 	"github.com/falsisdev/mangile-importer/internal/api"
 	"github.com/falsisdev/mangile-importer/internal/config"
+	"github.com/falsisdev/mangile-importer/internal/sanity"
 )
 
 func main() {
@@ -21,6 +22,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	client := sanity.New(cfg)
+
+	log.Println(client.URL("data/query/" + cfg.SanityDataset))
 
 	log.Printf("Sanity Project: %s", cfg.SanityProjectID)
 
