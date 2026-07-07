@@ -30,7 +30,7 @@ func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(1024 << 20)
+	err := r.ParseMultipartForm(1 << 30) //1GiB - 1024 << 20
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -8,7 +8,7 @@ import (
 	"net/url"
 )
 
-func (c *Client) FindManga(title string) (*Manga, error) {
+func (c *Client) FindManga(title string) (*Manga, error) { //method
 
 	query := `*[_type == "manga" && title == $title]{_id,title,myAnimeListId,"slug":slug.current}`
 

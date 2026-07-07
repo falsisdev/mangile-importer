@@ -14,6 +14,7 @@ type Config struct {
 	SanityAPIVersion string
 }
 
+// (*Config, error) return'de dönecek tipleri belirtiyor.
 func Load() (*Config, error) {
 
 	godotenv.Load()
@@ -41,5 +42,5 @@ func Load() (*Config, error) {
 		cfg.SanityAPIVersion = "2025-02-19"
 	}
 
-	return cfg, nil
+	return cfg, nil //*Config, error
 }
