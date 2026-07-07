@@ -3,3 +3,6 @@
 .gocache/
 .gomodcache/
 .agents/
+client/.vscode/
+client/node_modules/
+client/pnpm-lock.yaml

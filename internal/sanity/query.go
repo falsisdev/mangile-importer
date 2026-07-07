@@ -10,19 +10,34 @@ import (
 
 func (c *Client) FindManga(title string) (*Manga, error) { //method
 
-	query := `*[_type == "manga" && title == $title]{_id,title,myAnimeListId,"slug":slug.current}`
+	query := `*[_type == "manga" && title == $title]{
+	_id,
+	_type,
+	"banner": bannerImage.asset->url,
+	"chapters": chapters[]->{
+		_key,
+		chapterNumber,
+		"pages": pages.asset->url,
+	},
+	"cover": coverImage.asset->url,
+	description,
+	tags,
+	title,
+	myAnimeListId,
+	"slug": slug.current,
+	}`
 
 	u := c.URL("data/query/" + c.config.SanityDataset)
 
 	params := url.Values{}
 	params.Set("query", query)
 
-	quotedTitle, err := json.Marshal(title)
+	quoutedTitle, err := json.Marshal(title)
 	if err != nil {
 		return nil, err
 	}
 
-	params.Set("$title", string(quotedTitle))
+	params.Set("$title", string(quoutedTitle))
 
 	req, err := http.NewRequest(
 		http.MethodGet,
