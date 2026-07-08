@@ -19,10 +19,10 @@ func RegisterRoutes() *http.ServeMux {
 	mux.HandleFunc("/api/health", Health)
 	mux.HandleFunc("/api/mangas", GetMangas)
 	mux.HandleFunc("/api/upload", UploadCBZ)
+	mux.HandleFunc("/api/user/{logtoId}", CheckUser)
 
 	return mux
 }
-
 func UploadCBZ(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {

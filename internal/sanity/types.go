@@ -10,3 +10,11 @@ type Manga struct {
 type QueryResponse[T any] struct {
 	Result []T `json:"result"`
 }
+
+type SanityUser struct {
+	LogtoID  string `json:"logtoId"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+	Roles    any    `json:"roles"` //array içinde rol idleri
+}

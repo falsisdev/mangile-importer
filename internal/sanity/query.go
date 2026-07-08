@@ -8,6 +8,62 @@ import (
 	"net/url"
 )
 
+func (c *Client) GetUser(logtoId string) (*SanityUser, error) {
+	query := fmt.Sprintf(`*[_type == "auth" && logtoId == "%s"]{
+	roles,
+	logtoId,
+	avatar,
+	name,
+	username
+	}`, logtoId)
+
+	u := c.URL("data/query/" + c.config.SanityDataset)
+
+	params := url.Values{}
+	params.Set("query", query)
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		u+"?"+params.Encode(),
+		nil,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.config.SanityToken)
+
+	res, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(res.Body)
+
+		return nil, fmt.Errorf(
+			"Sanity isteği başarısız (%d): %s",
+			res.StatusCode,
+			string(body),
+		)
+	}
+
+	var response QueryResponse[SanityUser]
+
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(response.Result) == 0 {
+		return nil, fmt.Errorf("'%s' logtoId'ye sahip bir kullanıcı bulunamadı", logtoId)
+	}
+
+	return &response.Result[0], nil
+}
 func (c *Client) FindManga(title string) (*Manga, error) { //method
 
 	query := `*[_type == "manga" && title == $title]{
